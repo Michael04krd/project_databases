@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h1>ВЫ ВОШЛИ В СИСТЕМУ ДЛЯ МЕД.РАБОТНИКА</h1>
+    <script>
+        const accessToken = localStorage.getItem('access_token');
+        if (!accessToken) {
+            alert('Вы не авторизованы. Пожалуйста, войдите снова.');
+            window.location.href = '/medical_staff_registration.html';  // Возвращает на страницу входа
+        }
+    </script>
+</body>
+</html>

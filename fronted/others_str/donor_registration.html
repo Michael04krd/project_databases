@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Регистрация/вход донора</title>
+    <link rel="stylesheet" href="../styles/regist_donora.css" />
+</head>
+<body>
+    <div class="container">
+        <div class="frame">
+            <div class="nav">
+                <ul class="links">
+                    <li class="signin-active"><a id="signinBtn" class="btn_nav">ВХОД</a></li>
+                    <li class="signup-inactive"><a id="signupBtn" class="btn_nav">РЕГИСТРАЦИЯ</a></li>
+                </ul>
+            </div>
+            <form class="form-signin" id="signinForm" action="" method="post" name="form">
+                <div class="login_wrap">
+                    <label for="username_donar">ПОЧТА</label>
+                    <input type="text" id="username_donar" name="username_donar" required />
+                </div>
+                <div class="login_wrap">
+                    <label for="password_user">ПАРОЛЬ</label>
+                    <input type="password" id="password_user" name="password_user" required />
+                </div>
+								<button class="btn">ВОЙТИ</button>
+            </form>
+            <form class="form-signup" id="signupForm" action="" method="post" name="form">
+                <div class="wrap">
+                    <label for="fam">Введите Фамилию:</label>
+                    <input type="text" id="fam" name="fam"  required />
+                </div>
+                <div class="wrap">
+                    <label for="name">Введите Имя:</label>
+                    <input type="text" id="name" name="name"  required />
+                </div>
+                <div class="wrap">
+                    <label for="surname">Введите Отчество:</label>
+                    <input type="text" id="surname" name="surname"  required />
+                </div>
+                <div class="wrap">
+                    <label for="phone">Введите Ваш номер телефона</label>
+                    <input type="text" id="phone" name="phone"  required />
+                </div>
+                <div class="wrap">
+                    <label for="blood_group">Введите Вашу группу крови</label>
+                    <input type="text" id="blood_group" name="blood_group" required />
+                </div>
+                <div class="wrap">
+                    <label for="date_birth">Введите дату рождения</label>
+                    <input type="date" id="date_birth" name="date_birth" required />
+                </div>
+                <div class="wrap">
+                    <label for="password">Введите пароль:</label>
+                    <input type="password" id="password" name="password"  required />
+                </div>
+                <p>При входе в систему вашим логином будет ваша почта</p>
+                <button class="btn">ЗАРЕГИСТРИРОВАТЬСЯ</button>
+								<div class="success" style="display: none;"> 
+									<div class="successtext">
+											<p>Спасибо за регистрацию! Проверьте вашу почту для подтверждения.</p>
+									</div>
+							</div>
+            </form>
+
+        </div>
+    </div>
+    <script src="../scripts/donor_in_up.js"></script>
+</body>
+</html>
