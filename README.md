@@ -1,2 +1,2 @@
 # project_databases
-somthing about blood donors
+something about blood donors
