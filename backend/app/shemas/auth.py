@@ -32,7 +32,8 @@ class TokenData(BaseModel):
 
 class TokenResponse(Token):
     refresh_token: str
-    expires_in: int  # Время жизни в секундах
+    expires_in: int
+    user_role: Optional[str] = None
 
     class Config:
         schema_extra = {
@@ -40,7 +41,7 @@ class TokenResponse(Token):
                 "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
                 "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
                 "token_type": "bearer",
-                "expires_in": 1800  # 30 минут
+                "expires_in": 1800
             }
         }
 

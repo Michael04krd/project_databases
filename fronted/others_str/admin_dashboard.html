@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель - Медработники</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+          --primary-color: #6a11cb;
+          --secondary-color: #2575fc;
+          --sidebar-bg: #2c3e50;
+          --sidebar-active: #6a11cb;
+          --card-bg: #ffffff;
+          --table-header: #f8f9fa;
+          --success-color: #4776e6; /* Синий вместо зеленого */
+          --warning-color: #ff7e5f;
+          --danger-color: #dc3545;
+          --text-dark: #343a40;
+          --text-light: #f8f9fa;
+          --border-color: #e0e0e0;
+        }
+
+        body {
+          background-color: #f5f7fa;
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          color: var(--text-dark);
+        }
+
+        .sidebar {
+          min-height: 100vh;
+          background: linear-gradient(180deg, var(--sidebar-bg) 0%, #1a2530 100%);
+          box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar .nav-link {
+          color: rgba(255, 255, 255, 0.8);
+          border-radius: 5px;
+          margin: 2px 10px;
+          padding: 10px 15px;
+          transition: all 0.3s ease;
+        }
+
+        .sidebar .nav-link:hover {
+          color: white;
+          background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar .nav-link.active {
+          color: white;
+          background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar .nav-link i {
+          margin-right: 10px;
+          font-size: 1.1rem;
+        }
+
+        .main-content {
+          padding: 30px;
+          background-color: #f5f7fa;
+        }
+
+        .card {
+          border: none;
+          border-radius: 10px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+          background-color: var(--card-bg);
+          margin-bottom: 20px;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-header {
+          background-color: white;
+          border-bottom: 1px solid var(--border-color);
+          font-weight: 600;
+          padding: 15px 20px;
+          border-radius: 10px 10px 0 0 !important;
+        }
+
+        .btn-primary {
+          background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+          border: none;
+          padding: 8px 20px;
+          border-radius: 8px;
+          box-shadow: 0 2px 5px rgba(106, 17, 203, 0.3);
+        }
+
+        .btn-primary:hover {
+          background: linear-gradient(135deg, #5a0cb3 0%, #1a65e8 100%);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 8px rgba(106, 17, 203, 0.4);
+        }
+
+        .btn-outline-primary {
+          border-color: var(--primary-color);
+          color: var(--primary-color);
+        }
+
+        .btn-outline-primary:hover {
+          background-color: var(--primary-color);
+          border-color: var(--primary-color);
+        }
+
+        .btn-danger {
+          background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+          border: none;
+          box-shadow: 0 2px 5px rgba(220, 53, 69, 0.3);
+        }
+
+        .btn-danger:hover {
+          background: linear-gradient(135deg, #e03a5f 0%, #e04328 100%);
+        }
+
+        .card.text-white.bg-primary {
+        background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);}
+        .card.text-white.bg-success {
+          background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%) !important; /* Фиолетово-голубой */
+        }
+
+        .card.text-white.bg-warning {
+          background: linear-gradient(135deg, #d4145a 0%, #ff2e2e 100%) !important; /* Ярко-красный градиент */
+        }
+
+        .table {
+          margin-bottom: 0;
+        }
+
+        .table thead th {
+          background-color: var(--table-header);
+          border-bottom: 2px solid var(--border-color);
+          font-weight: 600;
+          padding: 12px 15px;
+        }
+
+        .table tbody tr {
+          transition: background-color 0.2s ease;
+        }
+
+        .table tbody tr:hover {
+          background-color: rgba(106, 17, 203, 0.05);
+        }
+
+        .table td {
+          padding: 12px 15px;
+          vertical-align: middle;
+        }
+
+        .badge {
+          padding: 6px 10px;
+          font-weight: 500;
+          border-radius: 8px;
+        }
+
+        .badge.bg-success {
+          background: linear-gradient(135deg, var(--success-color) 0%, #5a67d8 100%);
+          color: white;
+        }
+
+        .badge.bg-warning {
+          background: linear-gradient(135deg, #d4145a 0%, #ff2e2e 100%) !important; /* Ярко-красный градиент */
+          color: white;
+        }
+
+        .modal-content {
+          border: none;
+          border-radius: 12px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-header {
+          background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+          color: white;
+          border-radius: 12px 12px 0 0 !important;
+          padding: 15px 20px;
+        }
+
+        .modal-title {
+          font-weight: 600;
+        }
+
+        .form-control, .form-select {
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          padding: 10px 15px;
+          transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 0.25rem rgba(106, 17, 203, 0.25);
+        }
+
+        .stat-card {
+          border-radius: 12px;
+          overflow: hidden;
+          transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+          transform: translateY(-5px);
+        }
+
+        .stat-card .card-body {
+          padding: 20px;
+        }
+
+        .stat-card .card-title {
+          font-size: 1rem;
+          opacity: 0.9;
+          margin-bottom: 10px;
+        }
+
+        .stat-card .card-text {
+          font-size: 2rem;
+          font-weight: 700;
+        }
+
+        .action-btn {
+          width: 32px;
+          height: 32px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 8px;
+          transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+          transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+          .main-content {
+            padding: 15px;
+          }
+
+          .sidebar {
+            position: fixed;
+            z-index: 1000;
+            width: 250px;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+          }
+
+          .sidebar.show {
+            transform: translateX(0);
+          }
+
+          .stat-card .card-text {
+            font-size: 1.5rem;
+          }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3 col-lg-2 d-md-block sidebar collapse bg-dark">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-speedometer2 me-2"></i>Дашборд
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-people me-2"></i>Доноры
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#">
+                                <i class="bi bi-heart-pulse me-2"></i>Медработники
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-droplet me-2"></i>Донации
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-hospital me-2"></i>Учреждения
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-gear me-2"></i>Настройки
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <main class="col-md-9 ms-sm-auto col-lg-10 main-content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Управление медицинскими работниками</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMedicalWorkerModal">
+                            <i class="bi bi-plus-circle"></i> Добавить медработника
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card text-white bg-primary mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Всего медработников</h5>
+                                <p class="card-text display-4">127</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-white bg-success mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Активных</h5>
+                                <p class="card-text display-4">115</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-white bg-warning mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Неактивных</h5>
+                                <p class="card-text display-4">12</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Список медицинских работников</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>ФИО</th>
+                                        <th>Должность</th>
+                                        <th>Учреждение</th>
+                                        <th>Телефон</th>
+                                        <th>Статус</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1</td>
+                                        <td>Иванов Иван Иванович</td>
+                                        <td>Врач-трансфузиолог</td>
+                                        <td>Городская больница №1</td>
+                                        <td>+7 (123) 456-7890</td>
+                                        <td><span class="badge bg-success">Активен</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary action-btn" data-bs-toggle="modal" data-bs-target="#editMedicalWorkerModal">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger action-btn">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>2</td>
+                                        <td>Петрова Мария Сергеевна</td>
+                                        <td>Медсестра</td>
+                                        <td>Областная клиническая больница</td>
+                                        <td>+7 (987) 654-3210</td>
+                                        <td><span class="badge bg-success">Активен</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary action-btn" data-bs-toggle="modal" data-bs-target="#editMedicalWorkerModal">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger action-btn">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>3</td>
+                                        <td>Сидоров Алексей Владимирович</td>
+                                        <td>Лаборант</td>
+                                        <td>Центр крови</td>
+                                        <td>+7 (555) 123-4567</td>
+                                        <td><span class="badge bg-warning">Неактивен</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary action-btn" data-bs-toggle="modal" data-bs-target="#editMedicalWorkerModal">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger action-btn">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Назад</a>
+                                </li>
+                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">Вперед</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Add Medical Worker Modal -->
+    <div class="modal fade" id="addMedicalWorkerModal" tabindex="-1" aria-labelledby="addMedicalWorkerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addMedicalWorkerModalLabel">Добавить медицинского работника</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addMedicalWorkerForm">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="surname" class="form-label">Фамилия</label>
+                                <input type="text" class="form-control" id="surname" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="name" class="form-label">Имя</label>
+                                <input type="text" class="form-control" id="name" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="namedad" class="form-label">Отчество</label>
+                                <input type="text" class="form-control" id="namedad">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="password" class="form-label">Пароль</label>
+                                <input type="password" class="form-control" id="password" required>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="jobTitle" class="form-label">Должность</label>
+                                <input type="text" class="form-control" id="jobTitle" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="hospital" class="form-label">Учреждение</label>
+                                <select class="form-select" id="hospital" required>
+                                    <option value="" selected disabled>Выберите учреждение</option>
+                                    <option value="1">Городская больница №1</option>
+                                    <option value="2">Областная клиническая больница</option>
+                                    <option value="3">Центр крови</option>
+                                    <option value="4">Детская городская больница</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label">Телефон</label>
+                                <input type="tel" class="form-control" id="phone" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="status" class="form-label">Статус</label>
+                                <select class="form-select" id="status" required>
+                                    <option value="active" selected>Активен</option>
+                                    <option value="inactive">Неактивен</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editMedicalWorkerModal" tabindex="-1" aria-labelledby="editMedicalWorkerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editMedicalWorkerModalLabel">Редактировать медицинского работника</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editMedicalWorkerForm">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="editSurname" class="form-label">Фамилия</label>
+                                <input type="text" class="form-control" id="editSurname" value="Иванов" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editName" class="form-label">Имя</label>
+                                <input type="text" class="form-control" id="editName" value="Иван" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editNamedad" class="form-label">Отчество</label>
+                                <input type="text" class="form-control" id="editNamedad" value="Иванович">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="editEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="editEmail" value="ivanov@example.com" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editPassword" class="form-label">Пароль (оставьте пустым, чтобы не менять)</label>
+                                <input type="password" class="form-control" id="editPassword">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="editJobTitle" class="form-label">Должность</label>
+                                <input type="text" class="form-control" id="editJobTitle" value="Врач-трансфузиолог" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editHospital" class="form-label">Учреждение</label>
+                                <select class="form-select" id="editHospital" required>
+                                    <option value="1" selected>Городская больница №1</option>
+                                    <option value="2">Областная клиническая больница</option>
+                                    <option value="3">Центр крови</option>
+                                    <option value="4">Детская городская больница</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="editPhone" class="form-label">Телефон</label>
+                                <input type="tel" class="form-control" id="editPhone" value="+7 (123) 456-7890" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editStatus" class="form-label">Статус</label>
+                                <select class="form-select" id="editStatus" required>
+                                    <option value="active" selected>Активен</option>
+                                    <option value="inactive">Неактивен</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary">Сохранить изменения</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteConfirmationModalLabel">Подтверждение удаления</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Вы уверены, что хотите удалить этого медицинского работника? Это действие нельзя отменить.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-danger">Удалить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Здесь будет JavaScript код для работы с API
+        document.addEventListener('DOMContentLoaded', function() {
+            // Инициализация модальных окон и обработчиков событий
+
+            // Пример обработчика для кнопки удаления
+            document.querySelectorAll('.btn-danger').forEach(button => {
+                button.addEventListener('click', function() {
+                    const medicalWorkerId = this.closest('tr').querySelector('td').textContent;
+                    const medicalWorkerName = this.closest('tr').querySelectorAll('td')[1].textContent;
+
+                    // Можно установить имя в модальное окно подтверждения
+                    const modal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+                    modal.show();
+                });
+            });
+
+            // Обработчики для форм добавления/редактирования
+            // Здесь должна быть логика отправки данных на сервер
+        });
+    </script>
+</body>
+</html>

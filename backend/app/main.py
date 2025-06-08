@@ -65,14 +65,12 @@ app.include_router(donor_router)
 async def insert_initial_data():
     async with AsyncSessionLocal() as session:
         async with session.begin():
-            # Проверяем, есть ли уже пользователи
             result = await session.execute(select(User))
             existing_users = result.scalars().all()
             if existing_users:
                 print("Пользователи уже существуют. Пропуск заполнения.")
                 return
 
-            # Создаем тестовых пользователей
             test_users = [
                 User(
                     surname="Иванов",
@@ -106,7 +104,6 @@ async def insert_initial_data():
             session.add_all(test_users)
             await session.flush()
 
-            # Информация о доноре
             donor_info = DonorInfo(
                 user_id=test_users[1].id,
                 blood_group=BloodGroup.A_POSITIVE,
@@ -122,7 +119,6 @@ async def insert_initial_data():
             )
             session.add(donor_info)
 
-            # Кровь
             blood_bag = BloodBag(
                 blood_group=BloodGroup.A_POSITIVE,
                 volume=450,
@@ -132,7 +128,6 @@ async def insert_initial_data():
             )
             session.add(blood_bag)
 
-            # Сдача крови
             donation = Donation(
                 donor_id=test_users[1].id,
                 medical_id=test_users[0].id,

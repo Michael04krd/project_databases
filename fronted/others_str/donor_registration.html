@@ -1,71 +1,186 @@
 <!DOCTYPE html>
 <html lang="ru">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Регистрация/вход донора</title>
-    <link rel="stylesheet" href="../styles/regist_donora.css" />
-</head>
-<body>
-    <div class="container">
-        <div class="frame">
-            <div class="nav">
-                <ul class="links">
-                    <li class="signin-active"><a id="signinBtn" class="btn_nav">ВХОД</a></li>
-                    <li class="signup-inactive"><a id="signupBtn" class="btn_nav">РЕГИСТРАЦИЯ</a></li>
-                </ul>
-            </div>
-            <form class="form-signin" id="signinForm" action="" method="post" name="form">
-                <div class="login_wrap">
-                    <label for="username_donar">ПОЧТА</label>
-                    <input type="text" id="username_donar" name="username_donar" required />
-                </div>
-                <div class="login_wrap">
-                    <label for="password_user">ПАРОЛЬ</label>
-                    <input type="password" id="password_user" name="password_user" required />
-                </div>
-								<button class="btn">ВОЙТИ</button>
-            </form>
-            <form class="form-signup" id="signupForm" action="" method="post" name="form">
-                <div class="wrap">
-                    <label for="fam">Введите Фамилию:</label>
-                    <input type="text" id="fam" name="fam"  required />
-                </div>
-                <div class="wrap">
-                    <label for="name">Введите Имя:</label>
-                    <input type="text" id="name" name="name"  required />
-                </div>
-                <div class="wrap">
-                    <label for="surname">Введите Отчество:</label>
-                    <input type="text" id="surname" name="surname"  required />
-                </div>
-                <div class="wrap">
-                    <label for="phone">Введите Ваш номер телефона</label>
-                    <input type="text" id="phone" name="phone"  required />
-                </div>
-                <div class="wrap">
-                    <label for="blood_group">Введите Вашу группу крови</label>
-                    <input type="text" id="blood_group" name="blood_group" required />
-                </div>
-                <div class="wrap">
-                    <label for="date_birth">Введите дату рождения</label>
-                    <input type="date" id="date_birth" name="date_birth" required />
-                </div>
-                <div class="wrap">
-                    <label for="password">Введите пароль:</label>
-                    <input type="password" id="password" name="password"  required />
-                </div>
-                <p>При входе в систему вашим логином будет ваша почта</p>
-                <button class="btn">ЗАРЕГИСТРИРОВАТЬСЯ</button>
-								<div class="success" style="display: none;"> 
-									<div class="successtext">
-											<p>Спасибо за регистрацию! Проверьте вашу почту для подтверждения.</p>
-									</div>
-							</div>
-            </form>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Регистрация/вход донора</title>
+		<link rel="stylesheet" href="../styles/regist_donora.css" />
+	</head>
+	<body>
+		<div class="container">
+			<div class="frame">
+				<div class="nav">
+					<ul class="links">
+						<li class="signin-active"><a id="signinBtn" class="btn_nav">ВХОД</a></li>
+						<li class="signup-inactive"><a id="signupBtn" class="btn_nav">РЕГИСТРАЦИЯ</a></li>
+					</ul>
+				</div>
+				<form
+					class="form-signin"
+					id="signinForm"
+					action="http://127.0.0.1:8000/auth/login/donor"
+					method="post"
+					name="form"
+				>
+					<div class="login_wrap">
+						<label for="username">ПОЧТА</label>
+						<input type="text" id="username" name="username" required />
+					</div>
+					<div class="login_wrap">
+						<label for="password">ПАРОЛЬ</label>
+						<input type="password" id="password" name=password" required />
+					</div>
+					<button class="btn">ВОЙТИ</button>
+				</form>
+				<form class="form-signup" id="signupForm" action="http://127.0.0.1:8000/auth/register" method="post" name="form">
+					<div class="wrap">
+						<label for="surname">Фамилия:</label>
+						<input type="text" id="surname" name="surname" required />
+					</div>
+					<div class="wrap">
+						<label for="name">Имя:</label>
+						<input type="text" id="name" name="name" required />
+					</div>
+					<div class="wrap">
+						<label for="namedad">Отчество (если есть):</label>
+						<input type="text" id="namedad" name="namedad" />
+					</div>
+					<div class="wrap">
+						<label for="email">Email:</label>
+						<input type="email" id="email" name="email" required />
+					</div>
+					<div class="wrap">
+						<label for="password">Пароль:</label>
+						<input type="password" id="reg_password" name="password" required minlength="8" />
+					</div>
+					<div class="wrap">
+						<label for="password_confirm">Подтвердите пароль:</label>
+						<input type="password" id="password_confirm" name="password_confirm" required minlength="6" />
+					</div>
 
-        </div>
-    </div>
-    <script src="../scripts/donor_in_up.js"></script>
-</body>
+					<button type="submit" class="btn">ЗАРЕГИСТРИРОВАТЬСЯ</button>
+				</form>
+
+				<div id="successModal" class="modal" style="display: none">
+					<div class="modal-content">
+						<div class="modal-icon">✓</div>
+						<h2>Регистрация успешна!</h2>
+						<div class="modal-message">
+							<p>Спасибо за регистрацию в системе доноров крови!</p>
+							<p>
+								Для завершения регистрации и активации вашего аккаунта, пожалуйста, посетите любой медицинский центр в течение 7 дней для прохождения обследования.
+							</p>
+							<p>После проверки ваших данных медицинским работником, вам будет открыт полный доступ к системе.</p>
+						</div>
+						<button id="modalCloseBtn" class="modal-btn">Понятно</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script src="../scripts/donor_in_up.js"></script>
+		<script>
+			document.getElementById('signinForm').addEventListener('submit', async function (event) {
+				event.preventDefault()
+
+				const formData = {
+					username: document.getElementById('username').value,
+					password: document.getElementById('password').value,
+				}
+
+				try {
+					const response = await fetch('http://127.0.0.1:8000/auth/login/donor', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/x-www-form-urlencoded',
+						},
+						body: new URLSearchParams(formData),
+					})
+
+					if (!response.ok) {
+						const errorData = await response.json()
+						throw new Error(errorData.detail || 'Ошибка авторизации')
+					}
+
+					const data = await response.json()
+					console.log(data)
+
+					localStorage.setItem('access_token', data.access_token)
+					localStorage.setItem('refresh_token', data.refresh_token)
+					localStorage.setItem('user_role', data.user_role)
+
+					if (data.user_role === 'donor') {
+						window.location.href = './donor_dashboard.html'
+					} else {
+						alert('Ошибка доступа, вход только для доноров.')
+					}
+				} catch (error) {
+					console.error('Ошибка при авторизации:', error)
+					alert(error.message || 'Ошибка при авторизации. Проверьте логин и пароль.')
+				}
+			})
+
+			document.getElementById('signupForm').addEventListener('submit', async function (e) {
+			e.preventDefault()
+
+			if (document.getElementById('reg_password').value !== document.getElementById('password_confirm').value) {
+				alert('Пароли не совпадают!')
+				return
+			}
+			const password = document.getElementById('reg_password').value.trim()
+
+			if (password.length < 8) {
+				alert('Пароль должен содержать минимум 8 символов')
+				return
+			}
+
+			if (!/[A-Z]/.test(password)) {
+				alert('Пароль должен содержать хотя бы одну заглавную букву')
+				return
+			}
+
+			const formData = {
+				surname: document.getElementById('surname').value,
+				name: document.getElementById('name').value,
+				namedad: document.getElementById('namedad').value,
+				email: document.getElementById('email').value,
+				password: document.getElementById('reg_password').value,
+			}
+
+			try {
+				const btn = this.querySelector('button[type="submit"]')
+				btn.disabled = true
+				btn.textContent = 'Регистрация...'
+
+				const response = await fetch('http://127.0.0.1:8000/auth/register', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify(formData),
+				})
+
+				if (!response.ok) {
+					const errorData = await response.json()
+					throw new Error(errorData.detail || 'Ошибка регистрации')
+				}
+
+				document.getElementById('successModal').style.display = 'flex'
+			} catch (error) {
+				console.error('Ошибка:', error)
+				alert(error.message || 'Произошла ошибка при регистрации')
+			} finally {
+				const btn = document.querySelector('#signupForm button[type="submit"]')
+				if (btn) {
+					btn.disabled = false
+					btn.textContent = 'ЗАРЕГИСТРИРОВАТЬСЯ'
+				}
+			}
+		})
+
+		document.getElementById('modalCloseBtn').addEventListener('click', function () {
+			document.getElementById('successModal').style.display = 'none'
+			window.location.href = '../index.html'
+		})
+		</script>
+	</body>
 </html>

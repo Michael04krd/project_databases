@@ -1,24 +1,25 @@
 from datetime import datetime, timedelta
 from typing import Optional, Union
+
+from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 import os
 
-from ..database import Base, intpk, str_200
+from ..database import Base, intpk, str_200, get_db
 from ..models.user  import User, UserRole
 from ..models.med_work import MedicalWorkerInfo
 
-# Конфигурация
 SECRET_KEY = os.getenv("SECRET_KEY", "your-very-secure-secret-key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-REFRESH_TOKEN_EXPIRE_DAYS = 7
+REFRESH_TOKEN_EXPIRE_DAYS = 6
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="http://127.0.0.1:8000/auth/login/donor")
 
 class AuthService:
     @staticmethod
@@ -101,6 +102,12 @@ class AuthService:
         to_encode.update({"exp": expire})
         return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
+    @classmethod
+    async def get_user_by_email(cls, db: AsyncSession, email: str) -> Optional[User]:
+        result = await db.execute(select(User).where(User.email == email))
+        return result.scalar_one_or_none()
+
+
     @staticmethod
     async def get_current_user(
             db: AsyncSession,
@@ -125,6 +132,23 @@ class AuthService:
             raise credentials_exception
 
         return user
+
+    @classmethod
+    async def get_current_medical_user(
+            cls,
+            db: AsyncSession = Depends(get_db),
+            token: str = Depends(oauth2_scheme)
+    ) -> User:
+        user = await cls.get_current_user(db, token)
+
+        if user.role not in [UserRole.MEDICAL, UserRole.ADMIN]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Доступ только для медперсонала"
+            )
+
+        return user
+
 
     @staticmethod
     async def refresh_token(

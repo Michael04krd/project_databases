@@ -14,7 +14,7 @@
                     <li class="signin-active"><a id="signinBtn" class="btn_nav">ВХОД</a></li>
                 </ul>
             </div>
-            <form class="form-signin" id="signinForm" action="http://127.0.0.1:8000/auth/login" method="post" name="form">
+            <form class="form-signin" id="signinForm" action="http://127.0.0.1:8000/auth/login/staff" method="post" name="form">
                 <div class="login_wrap">
                     <label for="email">EMAIL РАБОТНИКА</label>
                     <input type="email" id="email" name="username" required />
@@ -29,35 +29,43 @@
     </div>
     <script>
         document.getElementById('signinForm').addEventListener('submit', async function(event) {
-            event.preventDefault(); // Предотвращаем стандартную отправку формы
+        event.preventDefault();
 
-            const formData = new FormData(event.target);
-            const username = formData.get('email');
-            const password = formData.get('password');
+        const formData = new FormData(event.target);
+        const username = formData.get('username');
+        const password = formData.get('password');
 
-            try {
-                const response = await fetch('http://127.0.0.1:8000/auth/login', {
-                    method: 'POST',
-                    body: formData,
-                });
+        try {
+            const response = await fetch('http://127.0.0.1:8000/auth/login/staff', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams(formData),
+            });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                console.log(data);
-
-
-                localStorage.setItem('access_token', data.access_token);
-                localStorage.setItem('refresh_token', data.refresh_token);
-
-                window.location.href = './medical_staff_dashboard.html';  // Замените на ваш URL ЛК
-            } catch (error) {
-                console.error('Ошибка при авторизации:', error);
-                alert('Ошибка при авторизации. Проверьте логин и пароль.');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Ошибка авторизации');
             }
-        });
+
+            const data = await response.json();
+            console.log(data);
+
+            localStorage.setItem('access_token', data.access_token);
+            localStorage.setItem('refresh_token', data.refresh_token);
+            localStorage.setItem('user_role', data.user_role);
+
+            if (data.user_role === 'admin') {
+                window.location.href = './admin_dashboard.html';
+            } else {
+                window.location.href = './medical_staff_dashboard.html';
+            }
+        } catch (error) {
+            console.error('Ошибка при авторизации:', error);
+            alert(error.message || 'Ошибка при авторизации. Проверьте логин и пароль.');
+        }
+    });
     </script>
 </body>
 </html>
