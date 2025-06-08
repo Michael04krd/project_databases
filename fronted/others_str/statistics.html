@@ -1,10 +1,78 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+    <meta charset="UTF-8" />
+    <title>Статистика групп крови</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        table {
+            width: 60%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .logout-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
+    <h1>Статистика групп крови</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Группа крови</th>
+                <th>Количество доноров</th>
+            </tr>
+        </thead>
+        <tbody id="stats-body">
+            <tr><td colspan="2">Загрузка данных...</td></tr>
+        </tbody>
+    </table>
+    <button class="logout-btn" onclick="window.history.back()">Назад</button>
 
+    <script>
+        const accessToken = localStorage.getItem('access_token');
+        if (!accessToken) {
+            alert("Вы не авторизованы");
+            window.location.href = 'medical_staff_registration.html';
+        }
+
+        async function loadStats() {
+            try {
+                const res = await fetch('http://127.0.0.1:8000/api/stats/blood-groups', {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+                const stats = await res.json();
+                const tbody = document.getElementById('stats-body');
+                tbody.innerHTML = "";
+                stats.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${item.blood_group}</td><td>${item.count}</td>`;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error(err);
+                alert("Ошибка загрузки статистики");
+            }
+        }
+
+        loadStats();
+    </script>
 </body>
 </html>

@@ -1,17 +1,82 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+    <meta charset="UTF-8" />
+    <title>Личный кабинет медработника</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .profile { margin-bottom: 30px; }
+        h2 { color: #333; }
+        ul { list-style-type: none; padding-left: 0; }
+        li { margin: 5px 0; }
+        a { text-decoration: none; color: #007bff; }
+        a:hover { text-decoration: underline; }
+        .logout-btn {
+            padding: 10px 20px;
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
-<h1>ВЫ ВОШЛИ В СИСТЕМУ ДЛЯ МЕД.РАБОТНИКА</h1>
+    <h1>Добро пожаловать в ваш личный кабинет</h1>
+
+    <div class="profile">
+        <h2>Ваш профиль</h2>
+        <ul id="profile-info">
+            <li>Загрузка данных...</li>
+        </ul>
+    </div>
+
+    <div class="links">
+        <h2>Ссылки</h2>
+        <ul>
+            <li><a href="statistics.html">Статистика групп крови</a></li>
+        </ul>
+    </div>
+
+    <button class="logout-btn" onclick="logout()">Выйти</button>
+
     <script>
         const accessToken = localStorage.getItem('access_token');
         if (!accessToken) {
-            alert('Вы не авторизованы. Пожалуйста, войдите снова.');
-            window.location.href = '/medical_staff_registration.html';  // Возвращает на страницу входа
+            alert("Вы не авторизованы");
+            window.location.href = 'medical_staff_registration.html';
         }
+
+        async function loadProfile() {
+            try {
+                const res = await fetch('http://127.0.0.1:8000/donors/me', {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+                const data = await res.json();
+                const profileDiv = document.getElementById('profile-info');
+                profileDiv.innerHTML = `
+                    <li><strong>ФИО:</strong> ${data.user.surname} ${data.user.name} ${data.user.namedad || ''}</li>
+                    <li><strong>Email:</strong> ${data.user.email}</li>
+                    <li><strong>Должность:</strong> ${data.medical_info.job_title}</li>
+                    <li><strong>Место работы:</strong> ${data.medical_info.hospital}</li>
+                    <li><strong>Телефон:</strong> ${data.medical_info.phone}</li>
+                `;
+            } catch (err) {
+                console.error(err);
+                alert("Ошибка загрузки профиля");
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            window.location.href = 'medical_staff_registration.html';
+        }
+
+        // Загрузка данных
+        loadProfile();
     </script>
 </body>
 </html>
