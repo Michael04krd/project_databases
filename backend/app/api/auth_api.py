@@ -87,7 +87,8 @@ async def login_donor(
         db: AsyncSession = Depends(get_db)
 ):
     try:
-        user = await AuthService.get_user_by_email(db, form_data.username)
+        auth_service = AuthService(db)
+        user = await auth_service.get_user_by_email(form_data.username)
         if not user or not AuthService.verify_password(form_data.password, user.hash_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -100,7 +101,7 @@ async def login_donor(
                 detail="Доступ только для доноров"
             )
 
-        tokens = await AuthService.login(db, email=form_data.username, password=form_data.password)
+        tokens = await auth_service.login(email=form_data.username, password=form_data.password)
         return {
             "access_token": tokens["access_token"],
             "refresh_token": tokens["refresh_token"],
@@ -126,7 +127,8 @@ async def login_staff(
         db: AsyncSession = Depends(get_db)
 ):
     try:
-        user = await AuthService.get_user_by_email(db, form_data.username)
+        auth_service = AuthService(db)
+        user = await auth_service.get_user_by_email(form_data.username)
         if not user or not AuthService.verify_password(form_data.password, user.hash_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -139,7 +141,7 @@ async def login_staff(
                 detail="Доступ только для персонала"
             )
 
-        tokens = await AuthService.login(db, email=form_data.username, password=form_data.password)
+        tokens = await auth_service.login(email=form_data.username, password=form_data.password)
         return {
             "access_token": tokens["access_token"],
             "refresh_token": tokens["refresh_token"],

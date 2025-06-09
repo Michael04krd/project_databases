@@ -16,12 +16,25 @@ async def get_my_info(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    service=DonorServices(db)
+    service = DonorServices(db)
     try:
-        return await service.get_info_donor(current_user.id)
+        result = await service.get_info_donor(current_user.id)
+        if not result.get('donor_info'):
+            raise HTTPException(
+                status_code=404,
+                detail="Донорская информация не заполнена"
+            )
+        return result
     except ValueError as e:
-        raise HTTPException(status_code=404, detail="Информация о доноре не найдена")
-
+        raise HTTPException(
+            status_code=404,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Ошибка сервера: {str(e)}"
+        )
 
 @donor_router.get(
     "/me/donations",

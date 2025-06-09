@@ -50,22 +50,38 @@
                         'Authorization': `Bearer ${accessToken}`
                     }
                 });
-                const data = await res.json();
-                const profileDiv = document.getElementById('profile-info');
-                profileDiv.innerHTML = `
-                    <li><strong>ФИО:</strong> ${data.user.surname} ${data.user.name} ${data.user.namedad || ''}</li>
-                    <li><strong>Email:</strong> ${data.user.email}</li>
-                    <li><strong>Группа крови:</strong> ${data.donor_info.blood_group}</li>
-                    <li><strong>Дата рождения:</strong> ${new Date(data.donor_info.date_birth).toLocaleDateString()}</li>
-                    <li><strong>Телефон:</strong> ${data.donor_info.phone}</li>
-                    <li><strong>Рост:</strong> ${data.donor_info.height} см</li>
-                    <li><strong>Вес:</strong> ${data.donor_info.weight} кг</li>
-                `;
-            } catch (err) {
-                console.error(err);
-                alert("Ошибка загрузки профиля");
-            }
+        const data = await res.json();
+        const profileDiv = document.getElementById('profile-info');
+
+        let html = `
+            <li><strong>ФИО:</strong> ${data.user.surname} ${data.user.name} ${data.user.namedad || ''}</li>
+            <li><strong>Email:</strong> ${data.user.email}</li>
+        `;
+
+        if (data.donor_info) {
+            html += `
+                <li><strong>Группа крови:</strong> ${data.donor_info.blood_group || 'Не указана'}</li>
+                <li><strong>Дата рождения:</strong> ${data.donor_info.date_birth ? new Date(data.donor_info.date_birth).toLocaleDateString() : 'Не указана'}</li>
+                <li><strong>Телефон:</strong> ${data.donor_info.phone || 'Не указан'}</li>
+                <li><strong>Рост:</strong> ${data.donor_info.height || 'Не указан'} см</li>
+                <li><strong>Вес:</strong> ${data.donor_info.weight || 'Не указан'} кг</li>
+                <li><strong>Хронические заболевания:</strong> ${data.donor_info.diseases || 'Нет'}</li>
+                <li><strong>Противопоказания:</strong> ${data.donor_info.contraindications || 'Нет'}</li>
+                <li><strong>Статус верификации:</strong> ${data.donor_info.is_verified ? 'Подтверждён' : 'Не подтверждён'}</li>
+                <li><strong>Проверил:</strong> ${data.donor_info.verified_by || '—'}</li>
+                <li><strong>Дата проверки:</strong> ${data.donor_info.verified_at ? new Date(data.donor_info.verified_at).toLocaleDateString() : '—'}</li>
+            `;
+        } else {
+            html += '<li><em>Донорская информация не заполнена</em></li>';
         }
+
+        profileDiv.innerHTML = html;
+    } catch (err) {
+        console.error('Ошибка загрузки профиля:', err);
+        document.getElementById('profile-info').innerHTML =
+            `<li style="color: red;">Ошибка: ${err.message}</li>`;
+    }
+}
 
         async function loadDonations() {
             try {
@@ -99,7 +115,6 @@
             window.location.href = 'donor_registration.html';
         }
 
-        // Загрузка данных
         loadProfile();
         loadDonations();
     </script>

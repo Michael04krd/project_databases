@@ -22,13 +22,43 @@ class DonorServices:
             .where(User.id==user_id)
             .options(selectinload(User.donor_info))
         )
-        user=res.scalar_one_or_none()
+        user = res.scalar_one_or_none()
+
+        if not user:
+            raise ValueError("Пользователь не найден")
+
         if not user.donor_info:
-            raise ValueError("Донор не найден")
+            return {
+                "user": {
+                    "surname": user.surname,
+                    "name": user.name,
+                    "namedad": user.namedad,
+                    "email": user.email,
+                    "id": user.id
+                },
+                "donor_info": None
+            }
 
         return {
-            "user":UserResponse.model_validate(user),
-            "donor_info":DonorInfoResponse.model_validate(user.donor_info)
+            "user": {
+                "surname": user.surname,
+                "name": user.name,
+                "namedad": user.namedad,
+                "email": user.email,
+                "id": user.id
+            },
+            "donor_info": {
+                "blood_group": user.donor_info.blood_group,
+                "date_birth": user.donor_info.date_birth.isoformat() if user.donor_info.date_birth else None,
+                "phone": user.donor_info.phone,
+                "height": user.donor_info.height,
+                "weight": user.donor_info.weight,
+                "diseases": user.donor_info.diseases if user.donor_info else None,
+                "contraindications": user.donor_info.contraindications if user.donor_info else None,
+                "is_verified": user.donor_info.is_verified if user.donor_info else False,
+                "verified_by": user.donor_info.verified_by if user.donor_info else None,
+                "verified_at": user.donor_info.verified_at.isoformat() if user.donor_info and user.donor_info.verified_at else None,
+            }
         }
 
     async def get_info_donor_with_email(self,email:EmailStr) -> dict:
@@ -52,7 +82,7 @@ class DonorServices:
             .where(Donation.donor_id==user_id)
             .order_by(Donation.donation_date.desc())
         )
-        donationd=res.scalar_one_or_none()
+        donationd=res.scalars().all()
         return [DonationResponse.model_validate(d) for d in donationd]
 
     async def check_next_donation(self, user_id: int) -> dict:
