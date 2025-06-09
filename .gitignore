@@ -1,4 +1,6 @@
 .idea/
 /backend/*
+*.pyc
+__pycache__/
 !/backend/app/
 !/backend/requirements.txt
