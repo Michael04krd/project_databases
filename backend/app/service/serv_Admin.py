@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from passlib.context import CryptContext
 from starlette import status
 
+from ..models import Donation
 from ..models.med_work import MedicalWorkerInfo
 from ..models.user import User, UserRole
 from ..shemas.shem_med_work import MedicalWorkerCreate, MedicalWorkerResponse
@@ -79,33 +80,41 @@ class AdminServices:
                 hospital=mw.hospital,
                 phone=mw.phone,
                 user=UserResponse(
-                    id=mw.user.id,
-                    surname=mw.user.surname,
-                    name=mw.user.name,
-                    namedad=mw.user.namedad,
-                    email=mw.user.email,
-                    role=mw.user.role,
-                    is_active=mw.user.is_active,
-                    created_at=mw.user.created_at
-                )
+                    id=mw.user.id if mw.user else None,
+                    surname=mw.user.surname if mw.user else None,
+                    name=mw.user.name if mw.user else None,
+                    namedad=mw.user.namedad if mw.user else None,
+                    email=mw.user.email if mw.user else None,
+                    role=mw.user.role.value if mw.user else None,
+                    is_active=mw.user.is_active if mw.user else False,
+                    created_at=mw.user.created_at if mw.user else None,
+                ) if mw.user else None
             )
             for mw in medical_workers
         ]
 
-    async def delete_medical_worker(self,current_user: User ,user_id: int) -> bool:
+    async def delete_medical_worker(self, current_user: User, worker_id: int) -> bool:
         if current_user.role != UserRole.ADMIN:
             raise HTTPException(status_code=403, detail="Только админ может удалять мед. работников")
 
-        user=await self.db.get(User,user_id)
-        if not user or user.role!=UserRole.MEDICAL:
-            return False
+        mw_info = await self.db.get(MedicalWorkerInfo, worker_id)
+        if not mw_info:
+            raise HTTPException(status_code=404, detail="Медицинский работник не найден")
+
+        user = await self.db.get(User, mw_info.user_id)
+        if not user or user.role != UserRole.MEDICAL:
+            raise HTTPException(status_code=400, detail="Нельзя удалить: пользователь не является медработником")
 
         await self.db.execute(
-            delete(MedicalWorkerInfo)
-            .where(MedicalWorkerInfo.user_id==user_id)
+            delete(Donation).where(Donation.medical_id == user.id)
         )
+
+        await self.db.delete(mw_info)
+
         await self.db.delete(user)
+
         await self.db.commit()
+
         return True
 
     async def update_medical_worker(

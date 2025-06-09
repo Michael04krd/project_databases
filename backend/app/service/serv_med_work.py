@@ -11,7 +11,8 @@ from starlette import status
 from ..models.user import User, UserRole
 from ..models.DonorInfo import DonorInfo,BloodGroup
 from ..models.Donation import Donation, DonationStatus
-from ..shemas.shem_dohor_info import DonorInfoResponse, DonorInfoCreate, DonorInfoUpdate
+from ..shemas.shem_dohor_info import DonorInfoResponse, DonorInfoCreate, DonorInfoUpdate, DonorListResponse
+from ..shemas.shem_users import UserResponse
 
 
 class MedWorkService:
@@ -115,3 +116,93 @@ class MedWorkService:
         await self.db.commit()
         await self.db.refresh(donor)
         return DonorInfoResponse.model_validate(donor)
+
+    async def get_all_donors(
+            self,
+            current_user: User,
+            blood_type: Optional[BloodGroup] = None,
+            is_verified: Optional[bool] = None,
+            search_query: Optional[str] = None,
+            last_donation_date: Optional[datetime] = None,
+            is_active: Optional[bool] = None
+    ) -> List[DonorListResponse]:
+        if current_user.role not in [UserRole.MEDICAL, UserRole.ADMIN]:
+            raise ValueError("Только медицинские работники и администраторы могут просматривать список доноров")
+
+        # Базовый запрос с одним JOIN и DISTINCT
+        query = (
+            select(User)
+            .distinct()
+            .where(User.role == UserRole.DONOR)
+            .join(User.donor_info)
+            .options(
+                selectinload(User.donor_info),
+                selectinload(User.donations)
+            )
+        )
+
+        # Применяем фильтры
+        if blood_type:
+            query = query.where(User.donor_info.blood_group == blood_type)
+
+        if is_verified is not None:
+            query = query.where(User.donor_info.is_verified == is_verified)
+
+        if is_active is not None:
+            query = query.where(User.is_active == is_active)
+
+        if search_query:
+            search = f"%{search_query}%"
+            query = query.where(
+                or_(
+                    User.surname.ilike(search),
+                    User.name.ilike(search),
+                    User.namedad.ilike(search),
+                    User.email.ilike(search),
+                    User.donor_info.phone.ilike(search)
+                )
+            )
+
+        if last_donation_date:
+            subquery = select(Donation.donor_id).where(
+                Donation.donation_date >= last_donation_date
+            ).group_by(Donation.donor_id)
+            query = query.where(User.id.in_(subquery))
+
+        result = await self.db.execute(query)
+        users = result.scalars().all()
+        print(f"Загружено уникальных пользователей: {len(users)}")
+
+        donors = []
+        for user in users:
+            if not user.donor_info:
+                continue
+
+            last_donation = max(
+                [d.donation_date for d in user.donations],
+                default=None
+            ) if user.donations else None
+
+            donors.append(DonorListResponse(
+                id=user.donor_info.id,
+                user_id=user.id,
+                surname=user.surname,
+                name=user.name,
+                namedad=user.namedad,
+                email=user.email,
+                blood_group=user.donor_info.blood_group,
+                phone=user.donor_info.phone,
+                height=user.donor_info.height,
+                weight=user.donor_info.weight,
+                date_birth=user.donor_info.date_birth,
+                diseases=user.donor_info.diseases,
+                contraindications=user.donor_info.contraindications,
+                is_verified=user.donor_info.is_verified,
+                verified_by=user.donor_info.verified_by,
+                verified_at=user.donor_info.verified_at,
+                is_active=user.is_active,
+                created_at=user.created_at,
+                last_donation_date=last_donation
+            ))
+
+        return donors

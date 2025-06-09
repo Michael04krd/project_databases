@@ -59,3 +59,32 @@ class DonorInfoResponse(DonorInfoBase):
     verified_by: Optional[int] = None
     verified_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
+
+
+from pydantic import BaseModel, ConfigDict
+from datetime import datetime
+from typing import Optional
+
+
+class DonorListResponse(BaseModel):
+    id: int
+    user_id: int
+    surname: str
+    name: str
+    namedad: Optional[str]
+    email: str
+    blood_group: BloodGroup
+    phone: Optional[str]
+    height: int
+    weight: int
+    date_birth: date
+    diseases: Optional[str]
+    contraindications: Optional[str]
+    is_verified: bool
+    verified_by: Optional[int]
+    verified_at: Optional[datetime]
+    is_active: bool
+    created_at: datetime
+    last_donation_date: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)

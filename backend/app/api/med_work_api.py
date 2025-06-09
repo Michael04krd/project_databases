@@ -1,16 +1,17 @@
 from datetime import datetime
 from typing import Optional, List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_db
 from backend.app.models import User
 from backend.app.service.serv_auth import AuthService
 from backend.app.service.serv_med_work import MedWorkService
-from backend.app.shemas.shem_dohor_info import DonorInfoResponse, DonorInfoCreate, DonorInfoUpdate
+from backend.app.shemas.shem_dohor_info import DonorInfoResponse, DonorInfoCreate, DonorInfoUpdate, DonorListResponse
 from fastapi.security import OAuth2PasswordBearer
 
+from ..models.DonorInfo import BloodGroup
 from ..service.serv_bloodBags import BloodBagsService
 from ..service.serv_donations import DonationService
 from ..shemas.shem_bloodbags import BloodBagResponse, BloodBagUpdate
@@ -204,3 +205,35 @@ async def update_blood_bag_status(
     if not result:
         raise HTTPException(status_code=404, detail="Blood bag not found")
     return result
+
+
+
+@med_work_router.get(
+    "/get_all_donors",
+    response_model=List[DonorListResponse],
+    summary="Получить список всех доноров",
+    description="Возвращает список доноров с возможностью фильтрации"
+)
+async def get_all_donors(
+    blood_type: Optional[BloodGroup] = Query(None, description="Фильтр по группе крови"),
+    is_verified: Optional[bool] = Query(None, description="Фильтр по статусу верификации"),
+    is_active: Optional[bool] = Query(None, description="Фильтр по активности аккаунта"),
+    search_query: Optional[str] = Query(None, description="Поиск по ФИО, email или телефону"),
+    last_donation_date: Optional[datetime] = Query(None, description="Фильтр по дате последней донации"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        service = MedWorkService(db)
+        return await service.get_all_donors(
+            current_user=current_user,
+            blood_type=blood_type,
+            is_verified=is_verified,
+            is_active=is_active,
+            search_query=search_query,
+            last_donation_date=last_donation_date
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка сервера: {str(e)}")
