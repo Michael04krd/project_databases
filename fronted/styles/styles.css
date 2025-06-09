@@ -7,6 +7,10 @@
     --blood-dark: #c0392b;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 .header {
     background: #e74c3c;
     color: white;
