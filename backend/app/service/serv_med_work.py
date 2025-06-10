@@ -12,6 +12,7 @@ from ..models.user import User, UserRole
 from ..models.DonorInfo import DonorInfo,BloodGroup
 from ..models.Donation import Donation, DonationStatus
 from ..shemas.shem_dohor_info import DonorInfoResponse, DonorInfoCreate, DonorInfoUpdate, DonorListResponse
+from ..shemas.shem_med_work import MedicalWorkerResponse
 from ..shemas.shem_users import UserResponse
 
 
@@ -206,3 +207,51 @@ class MedWorkService:
             ))
 
         return donors
+
+    async def get_med_worker_info(self, user_id: int) -> dict:
+        try:
+            query = select(User).where(
+                User.id == user_id,
+                User.role == UserRole.MEDICAL
+            ).options(
+                selectinload(User.medical_info)
+            )
+
+            result = await self.db.execute(query)
+            user = result.scalar_one_or_none()
+
+            if not user:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Медицинский работник не найден"
+                )
+
+            if not user.medical_info:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Информация о медицинском работнике не заполнена"
+                )
+
+            return {
+                "user_info": {
+                    "id": user.id,
+                    "surname": user.surname,
+                    "name": user.name,
+                    "namedad": user.namedad,
+                    "email": user.email,
+                    "role": user.role,
+                    "is_active": user.is_active,
+                    "created_at": user.created_at.isoformat() if user.created_at else None
+                },
+                "medical_info": {
+                    "id": user.medical_info.id,
+                    "job_title": user.medical_info.job_title,
+                    "hospital": user.medical_info.hospital,
+                    "phone": user.medical_info.phone
+                }
+            }
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Internal server error: {str(e)}"
+            )

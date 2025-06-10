@@ -237,3 +237,28 @@ async def get_all_donors(
         raise HTTPException(status_code=403, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка сервера: {str(e)}")
+
+@med_work_router.get("/me_info", response_model=dict)
+async def get_my_medical_info(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    service = MedWorkService(db)
+    try:
+        result = await service.get_med_worker_info(current_user.id)
+        if not result.get('medical_info'):
+            raise HTTPException(
+                status_code=404,
+                detail="Информация о медицинском работнике не заполнена"
+            )
+        return result
+    except ValueError as e:
+        raise HTTPException(
+            status_code=404,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Ошибка сервера: {str(e)}"
+        )
