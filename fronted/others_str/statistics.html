@@ -1,78 +1,346 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <title>Статистика групп крови</title>
+    <meta charset="UTF-8">
+    <title>Управление донорами</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { font-family: Arial; padding: 20px; }
-        table {
-            width: 60%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 10px;
-            text-align: center;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        .logout-btn {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #d9534f;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-        }
+        .stats-card { margin-bottom: 20px; }
+        .table-container { max-height: 500px; overflow-y: auto; }
+        .highlight { background-color: #f8f9fa; }
     </style>
 </head>
-<body>
-    <h1>Статистика групп крови</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Группа крови</th>
-                <th>Количество доноров</th>
-            </tr>
-        </thead>
-        <tbody id="stats-body">
-            <tr><td colspan="2">Загрузка данных...</td></tr>
-        </tbody>
-    </table>
-    <button class="logout-btn" onclick="window.history.back()">Назад</button>
+<body class="bg-light">
+    <div class="container py-4">
+        <h1 class="mb-4">Управление донорами и статистика</h1>
+        
+        <!-- Карточки со статистикой -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card stats-card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Распределение по группам крови</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="bloodGroupChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card stats-card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Общая статистика</h5>
+                    </div>
+                    <div class="card-body" id="generalStats">
+                        Загрузка данных...
+                    </div>
+                </div>
+            </div>
+        </div>
 
+        <!-- Таблица доноров -->
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Список доноров</h5>
+                <button id="addDonorBtn" class="btn btn-primary">Добавить донора</button>
+            </div>
+            <div class="card-body table-container">
+                <table class="table table-hover">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th>ФИО</th>
+                            <th>Группа крови</th>
+                            <th>Телефон</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="donorsTableBody">
+                        <tr><td colspan="5" class="text-center">Загрузка данных...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для добавления/редактирования -->
+    <div class="modal fade" id="donorModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Добавить донора</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="donorForm">
+                        <input type="hidden" id="donorId">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Фамилия</label>
+                                    <input type="text" class="form-control" id="surname" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Имя</label>
+                                    <input type="text" class="form-control" id="name" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Отчество</label>
+                            <input type="text" class="form-control" id="namedad">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Группа крови</label>
+                            <select class="form-select" id="bloodGroup" required>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Телефон</label>
+                            <input type="tel" class="form-control" id="phone" required>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="isVerified">
+                            <label class="form-check-label">Верифицирован</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="saveDonorBtn">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        const apiBaseUrl = 'http://127.0.0.1:8000/med_work';
+        let donors = [];
+        let bloodGroupChart = null;
+        const modal = new bootstrap.Modal(document.getElementById('donorModal'));
+        
+        // Проверка авторизации
         const accessToken = localStorage.getItem('access_token');
         if (!accessToken) {
-            alert("Вы не авторизованы");
+            alert('Требуется авторизация');
             window.location.href = 'medical_staff_registration.html';
         }
 
-        async function loadStats() {
+        // Загрузка данных
+        async function loadDonors() {
             try {
-                const res = await fetch('http://127.0.0.1:8000/api/stats/blood-groups', {
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`
+                const response = await fetch(`${apiBaseUrl}/get_all_donors`, {
+                    headers: { 
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
                     }
                 });
-                const stats = await res.json();
-                const tbody = document.getElementById('stats-body');
-                tbody.innerHTML = "";
-                stats.forEach(item => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `<td>${item.blood_group}</td><td>${item.count}</td>`;
-                    tbody.appendChild(tr);
-                });
-            } catch (err) {
-                console.error(err);
-                alert("Ошибка загрузки статистики");
+                
+                if (!response.ok) throw new Error('Ошибка загрузки данных');
+                
+                donors = await response.json();
+                renderDonorsTable(donors);
+                
+                // Рассчитываем статистику по группам крови
+                const stats = calculateBloodGroupStats(donors);
+                renderStatsChart(stats);
+                updateGeneralStats(donors);
+                
+            } catch (error) {
+                console.error('Ошибка:', error);
+                document.getElementById('donorsTableBody').innerHTML = 
+                    `<tr><td colspan="5" class="text-center text-danger">Ошибка загрузки: ${error.message}</td></tr>`;
             }
         }
 
-        loadStats();
+        function calculateBloodGroupStats(donors) {
+            const stats = {};
+            donors.forEach(donor => {
+                const bg = donor.blood_group;
+                stats[bg] = (stats[bg] || 0) + 1;
+            });
+            return Object.entries(stats).map(([blood_group, count]) => ({ blood_group, count }));
+        }
+
+        // Отображение таблицы доноров
+        function renderDonorsTable(donors) {
+            const tbody = document.getElementById('donorsTableBody');
+            tbody.innerHTML = donors.map(donor => `
+                <tr data-id="${donor.user_id}">
+                    <td>${donor.surname} ${donor.name} ${donor.namedad || ''}</td>
+                    <td>${donor.blood_group}</td>
+                    <td>${donor.phone}</td>
+                    <td>${donor.is_verified ? '✅ Верифицирован' : '❌ Не верифицирован'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary edit-btn me-2">Редактировать</button>
+                        <button class="btn btn-sm btn-outline-danger delete-btn">Удалить</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Назначение обработчиков
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => openEditModal(e.target.closest('tr').dataset.id));
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => deleteDonor(e.target.closest('tr').dataset.id));
+            });
+        }
+
+        // Визуализация статистики
+        function renderStatsChart(stats) {
+            const ctx = document.getElementById('bloodGroupChart').getContext('2d');
+            
+            if (bloodGroupChart) {
+                bloodGroupChart.destroy();
+            }
+            
+            bloodGroupChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: stats.map(item => item.blood_group),
+                    datasets: [{
+                        label: 'Количество доноров',
+                        data: stats.map(item => item.count),
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.7)',
+                            'rgba(54, 162, 235, 0.7)',
+                            'rgba(255, 206, 86, 0.7)',
+                            'rgba(75, 192, 192, 0.7)',
+                            'rgba(153, 102, 255, 0.7)',
+                            'rgba(255, 159, 64, 0.7)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Общая статистика
+        function updateGeneralStats(donors) {
+            const totalDonors = donors.length;
+            const verifiedDonors = donors.filter(d => d.is_verified).length;
+            const activeDonors = donors.filter(d => d.is_active).length;
+            
+            document.getElementById('generalStats').innerHTML = `
+                <div class="mb-2"><strong>Всего доноров:</strong> ${totalDonors}</div>
+                <div class="mb-2"><strong>Верифицировано:</strong> ${verifiedDonors} (${Math.round(verifiedDonors/totalDonors*100)}%)</div>
+                <div class="mb-2"><strong>Активных:</strong> ${activeDonors}</div>
+            `;
+        }
+
+        // Открытие модального окна для редактирования/добавления
+        function openEditModal(donorId = null) {
+            const form = document.getElementById('donorForm');
+            form.reset();
+            
+            if (donorId) {
+                document.getElementById('modalTitle').textContent = 'Редактировать донора';
+                const donor = donors.find(d => d.user_id == donorId);
+                document.getElementById('donorId').value = donor.user_id;
+                document.getElementById('surname').value = donor.surname;
+                document.getElementById('name').value = donor.name;
+                document.getElementById('namedad').value = donor.namedad || '';
+                document.getElementById('email').value = donor.email;
+                document.getElementById('bloodGroup').value = donor.blood_group;
+                document.getElementById('phone').value = donor.phone;
+                document.getElementById('isVerified').checked = donor.is_verified;
+            } else {
+                document.getElementById('modalTitle').textContent = 'Добавить донора';
+            }
+            
+            modal.show();
+        }
+
+        // Сохранение донора
+        async function saveDonor() {
+            const formData = {
+                surname: document.getElementById('surname').value,
+                name: document.getElementById('name').value,
+                namedad: document.getElementById('namedad').value,
+                email: document.getElementById('email').value,
+                blood_group: document.getElementById('bloodGroup').value,
+                phone: document.getElementById('phone').value,
+                is_verified: document.getElementById('isVerified').checked
+            };
+
+            const donorId = document.getElementById('donorId').value;
+            const endpoint = donorId ? `/donors/${donorId}` : '/create_donor';
+            const method = donorId ? 'PUT' : 'POST';
+
+            try {
+                const response = await fetch(`${apiBaseUrl}${endpoint}`, {
+                    method,
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) throw new Error(await response.text());
+                
+                modal.hide();
+                await loadDonors();
+            } catch (error) {
+                console.error('Ошибка сохранения:', error);
+                alert('Ошибка при сохранении данных: ' + error.message);
+            }
+        }
+
+        // Удаление донора
+        async function deleteDonor(donorId) {
+            if (!confirm('Вы уверены, что хотите удалить этого донора?')) return;
+            
+            try {
+                const response = await fetch(`${apiBaseUrl}/delete_donor/${donorId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+
+                if (!response.ok) throw new Error(await response.text());
+                
+                await loadDonors();
+            } catch (error) {
+                console.error('Ошибка удаления:', error);
+                alert('Ошибка при удалении донора: ' + error.message);
+            }
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('addDonorBtn').addEventListener('click', () => openEditModal());
+            document.getElementById('saveDonorBtn').addEventListener('click', saveDonor);
+            loadDonors();
+        });
     </script>
 </body>
 </html>
