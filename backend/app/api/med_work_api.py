@@ -231,13 +231,14 @@ async def get_all_donors(
             is_verified=is_verified,
             is_active=is_active,
             search_query=search_query,
-            last_donation_date=last_donation_date
+            last_donation_date=last_donation_date,
+            page=1,
+            per_page=10
         )
     except ValueError as e:
         raise HTTPException(status_code=403, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка сервера: {str(e)}")
-
 @med_work_router.get("/me_info", response_model=dict)
 async def get_my_medical_info(
     current_user: User = Depends(get_current_user),
@@ -262,3 +263,16 @@ async def get_my_medical_info(
             status_code=500,
             detail=f"Ошибка сервера: {str(e)}"
         )
+
+
+
+@med_work_router.get("/get_all_donations")
+async def get_all_donations(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    service = MedWorkService(db)
+    try:
+        return await service.get_all_donations(current_user)
+    except ValueError as e:
+        raise HTTPException(status_code=403, detail=str(e))

@@ -297,14 +297,14 @@
 								<div class="col-md-3">
 									<select class="form-select" id="bloodGroupFilter">
 										<option value="">Все группы крови</option>
-										<option value="A_POSITIVE">A+</option>
-										<option value="A_NEGATIVE">A-</option>
-										<option value="B_POSITIVE">B+</option>
-										<option value="B_NEGATIVE">B-</option>
-										<option value="AB_POSITIVE">AB+</option>
-										<option value="AB_NEGATIVE">AB-</option>
-										<option value="O_POSITIVE">O+</option>
-										<option value="O_NEGATIVE">O-</option>
+										<option value="A+">A+</option>
+										<option value="A-">A-</option>
+										<option value="B+">B+</option>
+										<option value="B-">B-</option>
+										<option value="AB+">AB+</option>
+										<option value="AB-">AB-</option>
+										<option value="O+">O+</option>
+										<option value="O-">O-</option>
 									</select>
 								</div>
 								<div class="col-md-3">
@@ -362,70 +362,98 @@
 			document.addEventListener('DOMContentLoaded', function () {
 				loadDonors()
 			})
+			document.addEventListener('DOMContentLoaded', function () {
+				loadDonors();
+			});
 
 			async function loadDonors(page = 1) {
 				try {
-					document.getElementById('donorsTableBody').innerHTML =
-						'<tr><td colspan="6" class="text-center">Загрузка данных...</td></tr>'
+					const tableBody = document.getElementById('donorsTableBody');
+					tableBody.innerHTML = '<tr><td colspan="9" class="text-center">Загрузка данных...</td></tr>';
 
-					const response = await fetch(
-						`${API_BASE_URL}/med_work/get_all_donors?page=${page}&per_page=${donorsPerPage}`,
-						{
-							method: 'GET',
-							headers: {
-								Authorization: `Bearer ${API_TOKEN}`,
-								'Content-Type': 'application/json',
-							},
-						}
-					)
+					// Получаем значения фильтров
+					const bloodGroup = document.getElementById('bloodGroupFilter').value;
+					const isVerified = document.getElementById('verificationFilter').value;
+					const searchQuery = document.getElementById('searchInput').value.trim();
+
+					// Формируем параметры запроса
+					const params = new URLSearchParams({
+						page: page,
+						per_page: donorsPerPage
+					});
+
+					// Добавляем фильтры, если они есть
+					if (bloodGroup) params.append('blood_type', bloodGroup);
+					if (isVerified !== '') params.append('is_verified', isVerified);
+					if (searchQuery) params.append('search_query', searchQuery);
+
+					const url = `${API_BASE_URL}/med_work/get_all_donors?${params.toString()}`;
+
+					const response = await fetch(url, {
+						headers: {
+							Authorization: `Bearer ${API_TOKEN}`,
+							'Content-Type': 'application/json',
+						},
+					});
 
 					if (!response.ok) {
-						const errorText = await response.text()
-						throw new Error(`Ошибка ${response.status}: ${errorText || 'Неизвестная ошибка сервера'}`)
+						const errorData = await response.json().catch(() => null);
+						const errorMsg = errorData?.detail || `Ошибка HTTP: ${response.status}`;
+						throw new Error(errorMsg);
 					}
 
-					const data = await response.json()
+					const data = await response.json();
 
 					if (!data || !Array.isArray(data)) {
-						throw new Error('Некорректный формат данных от сервера')
+						throw new Error('Некорректный формат данных от сервера');
 					}
 
-					donorsData = data
-					totalDonors = data.length
+					donorsData = data;
+					updateDonorsTable(donorsData);
+					updatePagination(data.length); // Обновляем пагинацию
 
-					updateDonorsTable(donorsData)
-					updatePagination()
 				} catch (error) {
-					console.error('Ошибка при загрузке доноров:', error)
-					document.getElementById(
-						'donorsTableBody'
-					).innerHTML = `<tr><td colspan="6" class="text-center text-danger">${error.message}</td></tr>`
+					console.error('Ошибка загрузки доноров:', error);
+					document.getElementById('donorsTableBody').innerHTML =
+						`<tr><td colspan="9" class="text-center text-danger">Ошибка: ${error.message}</td></tr>`;
 				}
 			}
-			function formatBloodGroup(bloodGroup) {
-				if (!bloodGroup) return 'Не указана'
+// Общие обработчики для всех фильтров
+document.getElementById('bloodGroupFilter').addEventListener('change', () => {
+    currentPage = 1;
+    loadDonors();
+});
 
-				switch (bloodGroup) {
-					case 'A_POSITIVE':
-						return 'A+'
-					case 'A_NEGATIVE':
-						return 'A-'
-					case 'B_POSITIVE':
-						return 'B+'
-					case 'B_NEGATIVE':
-						return 'B-'
-					case 'AB_POSITIVE':
-						return 'AB+'
-					case 'AB_NEGATIVE':
-						return 'AB-'
-					case 'O_POSITIVE':
-						return 'O+'
-					case 'O_NEGATIVE':
-						return 'O-'
-					default:
-						return bloodGroup // Если неизвестный формат — вернуть как есть
-				}
-			}
+document.getElementById('verificationFilter').addEventListener('change', () => {
+    currentPage = 1;
+    loadDonors();
+});
+
+document.getElementById('searchInput').addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') {
+        currentPage = 1;
+        loadDonors();
+    }
+});
+
+document.getElementById('searchButton').addEventListener('click', () => {
+    currentPage = 1;
+    loadDonors();
+});
+function formatBloodGroup(bloodGroup) {
+    if (!bloodGroup) return 'Не указана';
+
+    // Удаляем все символы, кроме A, B, AB, O и +/-
+    const cleaned = bloodGroup.replace(/[^ABO+-]/g, '');
+
+    // Если есть + или - в конце, возвращаем как есть
+    if (['+', '-'].includes(cleaned.slice(-1))) {
+        return cleaned;
+    }
+
+    // Если нет, добавляем + по умолчанию
+    return cleaned + '+';
+}
 
 			function updateDonorsTable(data) {
 				const tableBody = document.getElementById('donorsTableBody')

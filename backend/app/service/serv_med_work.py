@@ -14,6 +14,7 @@ from ..models.Donation import Donation, DonationStatus
 from ..shemas.shem_dohor_info import DonorInfoResponse, DonorInfoCreate, DonorInfoUpdate, DonorListResponse
 from ..shemas.shem_med_work import MedicalWorkerResponse
 from ..shemas.shem_users import UserResponse
+from ..models.DonorInfo import PyEnum
 
 
 class MedWorkService:
@@ -125,54 +126,67 @@ class MedWorkService:
             is_verified: Optional[bool] = None,
             search_query: Optional[str] = None,
             last_donation_date: Optional[datetime] = None,
-            is_active: Optional[bool] = None
+            is_active: Optional[bool] = None,
+            page: int = 1,
+            per_page: int = 10
     ) -> List[DonorListResponse]:
         if current_user.role not in [UserRole.MEDICAL, UserRole.ADMIN]:
-            raise ValueError("Только медицинские работники и администраторы могут просматривать список доноров")
+            raise HTTPException(
+                status_code=403,
+                detail="Только медицинские работники и администраторы могут просматривать список доноров"
+            )
 
-        # Базовый запрос с одним JOIN и DISTINCT
+        # Базовый запрос с eager loading
         query = (
             select(User)
-            .distinct()
             .where(User.role == UserRole.DONOR)
-            .join(User.donor_info)
             .options(
                 selectinload(User.donor_info),
                 selectinload(User.donations)
             )
         )
 
-        # Применяем фильтры
+        # Делаем JOIN только если нужны фильтры по donor_info
+        if blood_type or is_verified or search_query:
+            query = query.join(User.donor_info)
+
+        # Собираем условия фильтрации
+        filters = []
+
         if blood_type:
-            query = query.where(User.donor_info.blood_group == blood_type)
+            filters.append(DonorInfo.blood_group == blood_type)
 
         if is_verified is not None:
-            query = query.where(User.donor_info.is_verified == is_verified)
+            filters.append(DonorInfo.is_verified == is_verified)
 
         if is_active is not None:
-            query = query.where(User.is_active == is_active)
+            filters.append(User.is_active == is_active)
 
         if search_query:
             search = f"%{search_query}%"
-            query = query.where(
-                or_(
-                    User.surname.ilike(search),
-                    User.name.ilike(search),
-                    User.namedad.ilike(search),
-                    User.email.ilike(search),
-                    User.donor_info.phone.ilike(search)
-                )
-            )
+            filters.append(or_(
+                User.surname.ilike(search),
+                User.name.ilike(search),
+                User.namedad.ilike(search),
+                User.email.ilike(search),
+                DonorInfo.phone.ilike(search)
+            ))
 
         if last_donation_date:
             subquery = select(Donation.donor_id).where(
                 Donation.donation_date >= last_donation_date
-            ).group_by(Donation.donor_id)
-            query = query.where(User.id.in_(subquery))
+            ).group_by(Donation.donor_id).subquery()
+            filters.append(User.id.in_(subquery))
+
+        # Применяем все фильтры
+        if filters:
+            query = query.where(and_(*filters))
+
+        # Пагинация
+        query = query.offset((page - 1) * per_page).limit(per_page)
 
         result = await self.db.execute(query)
         users = result.scalars().all()
-        print(f"Загружено уникальных пользователей: {len(users)}")
 
         donors = []
         for user in users:
@@ -191,7 +205,8 @@ class MedWorkService:
                 name=user.name,
                 namedad=user.namedad,
                 email=user.email,
-                blood_group=user.donor_info.blood_group,
+                blood_group=user.donor_info.blood_group.value if isinstance(user.donor_info.blood_group,
+                                                                            PyEnum) else user.donor_info.blood_group,
                 phone=user.donor_info.phone,
                 height=user.donor_info.height,
                 weight=user.donor_info.weight,
@@ -255,3 +270,16 @@ class MedWorkService:
                 status_code=500,
                 detail=f"Internal server error: {str(e)}"
             )
+
+    async def get_all_donations(self, current_user: User) -> List[Donation]:
+        if current_user.role not in [UserRole.MEDICAL, UserRole.ADMIN]:
+            raise ValueError("Только медработники и администраторы могут просматривать донации")
+
+        query = select(Donation).options(
+            selectinload(Donation.donor),
+            selectinload(Donation.medical),
+            selectinload(Donation.blood_bag)  # ← Загружаем blood_bag
+        )
+
+        result = await self.db.execute(query)
+        return result.scalars().all()
